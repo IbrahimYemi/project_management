@@ -8,8 +8,24 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    public function index(Request $request) 
+    {
+        $user = auth()->user();
+        $query = $request->query('query');
+
+        // Get user's tasks with optional search filter
+        $tasks = $user->tasks()
+            ->when(!empty($query), function ($q) use ($query) {
+                $q->where('agenda', 'like', '%' . $query . '%');
+            })
+            ->orderBy("created_at", "desc")
+            ->paginate(20);
+
+        return $this->sendResponse($tasks);
+    }
+
     // List all tasks for a project (Team Lead and Members can view)
-    public function index(Project $project)
+    public function olDindex(Project $project)
     {
         $this->authorize('view', [auth()->user(), $project]);
 
@@ -19,7 +35,7 @@ class TaskController extends Controller
     }
 
     // Create a new task (Team Lead only)
-    public function store(Request $request, Project $project)
+    public function olDstore(Request $request, Project $project)
     {
         $this->authorize('create', [auth()->user(), $project]);
 
@@ -36,9 +52,9 @@ class TaskController extends Controller
     }
 
     // Update a task (Team Lead only)
-    public function update(Request $request, Task $task)
+    public function olDupdate(Request $request, Task $task)
     {
-        $this->authorize('create', [auth()->user(), $task]);
+        $this->authorize('update', [auth()->user(), $task]);
 
         $request->validate([
             'title' => 'sometimes|string|max:255',
@@ -53,12 +69,20 @@ class TaskController extends Controller
     }
 
     // Delete a task (Team Lead only)
-    public function destroy(Task $task)
+    public function olDdestroy(Task $task)
     {
         $this->authorize('create', [auth()->user(), $task]);
 
         $task->delete();
 
         return response()->json(['message' => 'Task deleted successfully']);
+    }
+
+    public function olDmarkAsCompleted(Task $task)
+    {
+        $this->authorize('update', [auth()->user(), $task]);
+        $task->markAsCompleted();
+
+        return response()->json(['message'=> 'Task completed successfully!']);
     }
 }

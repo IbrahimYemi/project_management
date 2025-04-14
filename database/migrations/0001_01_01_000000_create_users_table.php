@@ -12,11 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary()->unique();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('avatar')->nullable();
+            $table->string('app_role')->default('Member')->comment('Role of the user in the application: Super Admin, Admin, Team Lead, Member');
+            $table->string('login_token')->nullable();
+            $table->datetime('login_token_requested_at')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
         });
@@ -29,7 +34,7 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->foreignUuid('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');

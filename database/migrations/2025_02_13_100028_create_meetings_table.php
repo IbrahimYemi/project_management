@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('meetings', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary()->unique();
             $table->string('agenda'); // Agenda for the meeting
             $table->string('link')->nullable(); // Meeting link (e.g., Zoom, Google Meet)
-            $table->foreignId('project_id')->constrained('projects')->onDelete('cascade'); // Associated project
-            $table->foreignId('team_id')->nullable()->constrained('teams')->onDelete('cascade'); // Associated team
-            $table->foreignId('task_id')->nullable()->constrained('tasks')->onDelete('cascade'); // Optional: Associated task
+            $table->foreignUuid('project_id')->constrained('projects')->onDelete('cascade'); // Associated project
+            $table->foreignUuid('team_id')->nullable()->constrained('teams')->onDelete('cascade'); // Associated team
+            $table->foreignUuid('task_id')->nullable()->constrained('tasks')->onDelete('cascade'); // Optional: Associated task
             $table->date('date'); // Date of the meeting
             $table->time('time'); // Time of the meeting
             $table->timestamps(); // Created at and updated at timestamps

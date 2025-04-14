@@ -107,13 +107,13 @@ class DiscussionController extends Controller
         $user = auth()->user();
 
         if ($discussable instanceof Project) {
-            return $user->hasRole('Admin') ||
+            return $user->hasAnyAppRole('Admin') ||
                    $discussable->team->team_lead_id === $user->id ||
                    $discussable->team->members->contains($user);
         }
 
         if ($discussable instanceof Task) {
-            return $user->hasRole('Admin') ||
+            return $user->hasAnyAppRole('Admin') ||
                    $discussable->project->team->team_lead_id === $user->id ||
                    $discussable->assigned_to === $user->id;
         }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckIfUserIsActive;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'is_active' => CheckIfUserIsActive::class,
         ]);
 
         //

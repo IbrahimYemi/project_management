@@ -2,18 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Attachment extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
     
-    protected $fillable = ['task_id', 'file_url', 'link_url'];
+    protected $fillable = ['task_id', 'url', 'name', 'user_id'];
 
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

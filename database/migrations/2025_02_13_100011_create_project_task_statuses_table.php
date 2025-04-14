@@ -12,9 +12,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('project_task_statuses', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary()->unique();
             $table->string('name');
-            $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
+            $table->decimal('percentage', 10,2)->default(0);
+            $table->foreignUuid('project_id')->constrained('projects')->onDelete('cascade');
             $table->timestamps();
         });
     }

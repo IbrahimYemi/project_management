@@ -12,8 +12,9 @@ return new class extends Migration
     public function up()
     {
         Schema::create('project_statuses', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary()->unique();
             $table->string('name');
+            $table->decimal('percentage', 10,2)->default(0);
             $table->timestamps();
         });
     }

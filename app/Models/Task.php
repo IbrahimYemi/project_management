@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,9 +10,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
     
-    protected $fillable = ['title', 'description', 'status_id', 'project_id', 'assigned_to'];
+    protected $fillable = ['title', 'description', 'status_id', 'project_id', 'assigned_to', 'is_completed', 'priority_id', 'task_image', 'start_date', 'due_date'];
+
+    protected $casts = [
+        'is_completed' => 'boolean',
+        'start_date' => 'datetime',
+        'due_date' => 'datetime',
+    ];
 
     public function project(): BelongsTo
     {
@@ -41,6 +48,17 @@ class Task extends Model
     public function meetings(): HasMany
     {
         return $this->hasMany(Meeting::class);
+    }
+
+    public function markAsCompleted()
+    {
+        $this->is_completed = true;
+        $this->save();
+    }
+
+    public function priority(): BelongsTo
+    {
+        return $this->belongsTo(PriorityStatus::class);
     }
 }
 

@@ -12,11 +12,12 @@ return new class extends Migration
     public function up()
     {
         Schema::create('projects', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary()->unique();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('team_id')->constrained('teams')->onDelete('cascade');
-            $table->foreignId('status_id')->constrained('project_statuses')->onDelete('cascade');
+            $table->boolean('is_completed')->default(false);
+            $table->foreignUuid('team_id')->constrained('teams')->onDelete('cascade');
+            $table->foreignUuid('status_id')->constrained('project_statuses')->onDelete('cascade');
             $table->timestamps();
         });
     }
