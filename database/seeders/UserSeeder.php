@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Faker\Factory as Faker;
@@ -22,30 +21,26 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($roles as $roleName => $email) {
-            $role = Role::firstOrCreate(['name' => $roleName]);
-
-            $user = User::updateOrCreate(
+            User::updateOrCreate(
                 ['email' => $email],
                 [
                     'name' => $roleName,
-                    'password' => Hash::make('password@' . strtoupper(str_replace(' ', '_', $roleName))),
+                    'password' => Hash::make('password'),
                     'email_verified_at' => now(),
+                    'app_role' => $roleName,
                 ]
             );
-            
-            $user->assignRole($role);
         }
 
-        // Insert 200 users as "Member"
-        $memberRole = Role::firstOrCreate(['name' => 'Member']);
+        // Insert users as "Member"
         $bulkUsers = [];
 
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < 5; $i++) {
             $bulkUsers[] = [
                 'id' => $faker->uuid,
                 'name' => $faker->name,
                 'email' => $faker->unique()->safeEmail,
-                'password' => Hash::make('password@MEMBER'),
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'avatar' => "https://i.pravatar.cc/150?img=" . (($i % 70) + 1),
             ];
@@ -53,11 +48,5 @@ class UserSeeder extends Seeder
 
         // Insert users in bulk
         User::insert($bulkUsers);
-
-        // Assign the "Member" role to all 200 users
-        $members = User::whereIn('email', array_column($bulkUsers, 'email'))->get();
-        foreach ($members as $member) {
-            $member->assignRole($memberRole);
-        }
     }
 }

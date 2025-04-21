@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\PriorityStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,16 +16,58 @@ class ProjectCollectionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'project' => AllProjectResource::make($this),
+            'project' => [
+                'id' => $this->id,
+                'name' => $this->name,
+                'description' => $this->description,
+                'task_count' => $this->tasks_count,
+                'members_count' => $this->team->members_count,
+                'team_name' => $this->team->name,
+                'percentage' => $this->getProgressPercentage() ?? 0,
+                'is_completed' => $this->is_completed ?? false,
+                'created_at' => $this->created_at->toISOString(),
+                'task_status' => $this->taskStatuses ?? [],
+                'team_id' => $this->team->id ?? null,
+                'status_id' => $this->status_id ?? null,
+                'status' => $this->status ?? null,
+            ],
+
+            'tasks' => $this->tasks->map(function ($task) {
+                return [
+                    'id' => $task->id,
+                    'name' => $task->title,
+                    'description' => $task->description,
+                    'status' => [
+                        'id' => $task->status?->id,
+                        'name' => $task->status?->name,
+                    ],
+                    'percentage' => $task->status?->percentage,
+                    'project' => [
+                        'id' => $this->id,
+                        'name' => $this->name,
+                    ],
+                    'owner' => [
+                        'id' => $task->assignedUser?->id,
+                        'name' => $task->assignedUser?->name,
+                        'email' => $task->assignedUser?->email,
+                        'avatar' => $task->assignedUser?->avatar,
+                        'app_role' => $task->assignedUser?->app_role,
+                    ],
+                    'startDate' => $task->created_at->format('F j, Y') . ' (' . $task->created_at->diffForHumans() . ')',
+                    'dueDate' => optional($task->due_date)?->format('F j, Y') . ' (' . optional($task->due_date)?->diffForHumans() . ')',
+                    'isCompleted' => $task->is_completed,
+                    'priority' => $task->priority?->name,
+                ];
+            }),
+
             'team' => [
                 'id' => $this->team?->id,
                 'name' => $this->team?->name,
                 'teamLead' => $this->team?->teamLead?->name ?? null,
-                'members' => $this->team?->members->count(),
-                'projectCount' => $this->team?->projects->count(),
+                'members' => $this->team?->members_count,
+                'projectCount' => $this->team?->projects_count,
                 'teamLeadId' => $this->team?->teamLead?->id ?? null,
             ],
-            'tasks' => TaskCollectionResource::collection($this->tasks),
             
             'members' => $this->team->members->map(function ($member) {
                 return [
@@ -37,17 +80,7 @@ class ProjectCollectionResource extends JsonResource
                 ];
             }),
 
-            'meetings' => $this->meetings->map(function ($meeting) {
-                return [
-                    'id' => $meeting->id,
-                    'title' => $meeting->title,
-                    'description' => $meeting->description,
-                    'start_time' => $meeting->start_time,
-                    'end_time' => $meeting->end_time,
-                    'participants' => $meeting->participants,
-                    'created_at' => $meeting->created_at->toISOString(),
-                ];
-            })->toArray(),
+            'priorities' => PriorityStatus::query()->orderBy('name')->get()->toArray(),
         ];
     }
 }

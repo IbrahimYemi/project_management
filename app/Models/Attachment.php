@@ -11,7 +11,7 @@ class Attachment extends Model
 {
     use HasFactory, HasUuids;
     
-    protected $fillable = ['task_id', 'url', 'name', 'user_id'];
+    protected $fillable = ['task_id', 'url', 'name', 'user_id', 'type'];
 
     public function task(): BelongsTo
     {

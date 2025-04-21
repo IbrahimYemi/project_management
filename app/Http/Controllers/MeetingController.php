@@ -72,9 +72,13 @@ class MeetingController extends Controller
             'time' => 'required|date_format:H:i',
         ]);
 
-        $project = Project::find($request->project_id);
+        $project = Project::with('team.members')->find($request->project_id);
         if (!$project) {
             return $this->sendError('Project not found', 404);
+        }
+
+        if ($project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
         }
 
         $meeting = $project->meetings()->create([
@@ -105,6 +109,11 @@ class MeetingController extends Controller
             return $this->sendError('Unauthorized, you can not edit a meeting schedule!', 403);
         }
 
+        $meeting->load('project');
+        if ($meeting->project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
+        }
+
         $request->validate([
             'agenda' => 'sometimes|string|max:255',
             'link' => 'nullable|url',
@@ -132,6 +141,11 @@ class MeetingController extends Controller
 
         if (!$user->hasAnyAppRole(['Admin', 'Team Lead', 'Super Admin'])) {
             return $this->sendError('Unauthorized, you can not edit a meeting schedule!', 403);
+        }
+
+        $meeting->load('project');
+        if ($meeting->project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
         }
 
         $meeting->delete();

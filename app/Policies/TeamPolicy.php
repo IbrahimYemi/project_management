@@ -32,7 +32,7 @@ class TeamPolicy
 
     public function member(User $user, Team $team)
     {
-        return $team->members->contains($user);
+        return $user->hasAnyAppRole(['Admin', 'Super Admin']) || $team->members->contains($user);
     }
 
     public function add(User $user)

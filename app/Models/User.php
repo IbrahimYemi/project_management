@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -73,6 +74,18 @@ class User extends Authenticatable
         return $this->belongsToMany(Team::class, 'team_members');
     }
 
+    public function projects(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Project::class,
+            Team::class,
+            'id',           // Foreign key on the Project table (team_id)
+            'id',           // Local key on the User model (id)
+            'id',           // Local key on the User model (id)
+            'team_lead_id'  // Foreign key on the Team table (user id for lead)
+        );
+    }
+
     /**
      * Generate a new login token.
      */
@@ -98,7 +111,7 @@ class User extends Authenticatable
     // Accessor for Role
     public function getRoleAttribute(): string
     {
-        return $this->roles()->first()?->name ?? 'No Role'; 
+        return $this->app_role; 
     }
 
     // Convert is_active to isActive for JS compatibility

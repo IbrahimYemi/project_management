@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TaskCollectionResource;
 use App\Mail\UserInviteMail;
 use App\Models\User;
 use App\Models\UserInvite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\{Auth, Hash, Mail};
+use App\Http\Resources\AllProjectResource;
+use App\Models\Project;
 
 class UserInviteController extends Controller
 {
@@ -28,6 +31,16 @@ class UserInviteController extends Controller
         }
 
         return $this->sendResponse($users->paginate($perPage));
+    }
+
+    public function getUserDetails(User $user)
+    {
+        $user->load('projects', 'tasks');
+        return $this->sendResponse([
+            'user' => $user,
+            'projects' => AllProjectResource::collection(Project::Accessible($user)->with(['taskStatuses', 'status'])->get()),
+            'tasks' => TaskCollectionResource::collection($user->tasks),
+        ]);
     }
 
     public function getAllUnpaginatedUsers(Request $request)

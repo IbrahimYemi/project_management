@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 
 class Project extends Model
 {
     use HasFactory, HasUuids;
     
     protected $fillable = ['name', 'description', 'team_id', 'status_id', 'is_completed'];
+
+    protected $preventLazyLoading = true;
 
     public function team(): BelongsTo
     {
@@ -60,10 +63,36 @@ class Project extends Model
         return $query->where('is_completed', false);
     }
 
+    /**
+     * Summary of scopeAccessible
+     * @param mixed $query
+     * @param \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable|null $user
+     */
+    public function scopeAccessible($query, User | Auth $user = null)
+    {
+        if ($user === null) {
+            $user = Auth::user();
+        }
+        // If no user is authenticated, return an empty query
+        if ($user === null) {
+            return $query->whereRaw('1 = 0'); // No results
+        }
+
+        // Check if the user is an admin or super admin
+        if ($user->hasAnyAppRole(['Super Admin', 'Admin'])) {
+            return $query;
+        }
+
+        // Team Members - Projects where user is a member
+        return $query->whereHas('team.members', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+    }
+
     public function getProgressPercentage()
     {
         // Get all tasks for this project
-        $tasks = $this->tasks()->with('status')->get();
+        $tasks = $this->tasks;
 
         // If no tasks, progress is 0
         if ($tasks->isEmpty()) {

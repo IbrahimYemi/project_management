@@ -19,13 +19,13 @@ class NoteController extends Controller
 
     public function getPersonalNote()
     {
-        auth()->user()->load('notes');
+        auth()->user()->load('notes.user', 'notes.project');
         return $this->sendResponse(NoteColectionResource::collection(auth()->user()->notes));
     }
 
     public function getProjectNote(Project $project)
     {
-        $project->load('notes');
+        $project->load('notes.user', 'notes.project');
         return $this->sendResponse(NoteColectionResource::collection($project->notes));
     }
 
@@ -36,6 +36,11 @@ class NoteController extends Controller
             'content' => 'required|string',
             'project_id' => 'nullable|exists:projects,id',
         ]);
+
+        $project = Project::find($request->project_id);
+        if ($project && $project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
+        }
 
         $note = Note::create([
             'user_id' => Auth::id(),
@@ -56,6 +61,11 @@ class NoteController extends Controller
     {
         $this->authorize('update', $note);
 
+        $note->load('project');
+        if ($note->project_id !== null && $note->project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -67,6 +77,11 @@ class NoteController extends Controller
 
     public function destroy(Note $note)
     {
+        $note->load('project');
+        if ($note->project_id !== null && $note->project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
+        }
+        
         $this->authorize('delete', $note);
         $note->delete();
         return $this->sendResponse([], 'Note deleted successfully!');

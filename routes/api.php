@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // user related routes
         Route::get('/auth/user', [UserInviteController::class, 'getAuthUser']);
         Route::get('/all-users', [UserInviteController::class, 'getAllUsers']);
+        Route::get('/users/{user}/get-details', [UserInviteController::class, 'getUserDetails']);
         Route::get('/all-unpaginated-users', [UserInviteController::class, 'getAllUnpaginatedUsers']);
         Route::post('/change-user-role/{user}', [UserInviteController::class, 'updateUserAppRole']);
         Route::post('/restrict-user/{user}', [UserInviteController::class, 'restrictUser']);
@@ -43,6 +44,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Task Routes
         Route::apiResource('tasks', TaskController::class);
+        Route::post('tasks/{task}/mark-as-completed', [TaskController::class, 'markAsCompleted']);
+        Route::post('/tasks/{task}/files', [TaskController::class, 'addTaskFile']);
+        Route::delete('/tasks/files/{attachment}', [TaskController::class, 'deleteTaskFile']);
+        Route::post('/tasks/{task}/discussions', [TaskController::class, 'addTaskDiscussion']);
+        Route::delete('/tasks/discussions/{discussion}', [TaskController::class, 'deleteTaskDiscussion']);
+        Route::put('/tasks/{task}/update/task-status', [TaskController::class, 'updateTaskStatus']);
 
         // Team Routes
         Route::apiResource('teams', TeamController::class);

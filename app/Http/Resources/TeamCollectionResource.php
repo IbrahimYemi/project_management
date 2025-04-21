@@ -32,18 +32,7 @@ class TeamCollectionResource extends JsonResource
                 ];
             }),
             'project_on' => $this->projects->map(function ($project) {
-                return [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'description' => $project->description,
-                    'task_count' => $project->tasks->count(),
-                    'members_count' => $project->team->members->count(),
-                    'team_name' => $this->name,
-                    'percentage' => $project->progress_percentage ?? 0,
-                    'is_completed' => $project->is_completed ?? false,
-                    'created_at' => $project->created_at->toISOString(),
-                    'task_status' => $project->task_status ?? [],
-                ];
+                return AllProjectResource::make($project);
             }),
         ];
     }

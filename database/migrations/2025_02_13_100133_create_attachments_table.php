@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary()->unique();
             $table->string('url')->nullable();
             $table->string('name')->nullable();
+            $table->string('type')->nullable();
             $table->foreignUuid('task_id')->constrained('tasks')->onDelete('cascade');
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();

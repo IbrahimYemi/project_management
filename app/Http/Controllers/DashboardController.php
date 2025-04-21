@@ -9,73 +9,73 @@ use App\Models\Task;
 use App\Models\Meeting;
 use App\Models\Team;
 use App\Models\ProjectStatus;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
-    
+
     public function dashboard()
     {
-        // Get total number of projects
-        $totalProjects = Project::count();
+        $cacheKey = 'dashboard_data_' . auth()->id();
+        $cacheDuration = now()->addMinutes(3);
 
-        // Avoid division by zero
-        if ($totalProjects === 0) {
-            $projectStatuses = collect([]);
-        } else {
-            // Group projects by status and return percentage
-            $projectStatuses = ProjectStatus::withCount('projects')->get()->map(function ($status) use ($totalProjects) {
-                $percentage = round(($status->projects_count / $totalProjects) * 100, 2); // You can round to whole numbers if you prefer
+        $data = Cache::remember($cacheKey, $cacheDuration, function () {
+            $totalProjects = Project::Accessible()->count();
+
+            $projectStatuses = ProjectStatus::withCount(['projects' => function ($query) {
+                $query->Accessible();
+            }])->get()->map(function ($status) use ($totalProjects) {
+                $percentage = $totalProjects > 0
+                    ? round(($status->projects_count / $totalProjects) * 100, 2)
+                    : 0;
                 return [
                     'name' => $status->name,
                     'value' => $percentage,
                 ];
             });
-        }
-    
-        // Get all projects with their status and value/progress (assume value = progress %)
-        $allProjectsData = Project::with('status')
-            ->get()
-            ->map(function ($project) {
-                return [
-                    'name' => $project->name,
-                    'statusName' => $project->status?->name ?? 'Unknown',
-                    'value' => $project->getProgressPercentage() ?? 0,
-                ];
-            });
-    
-        // Get tasks with owner name and progress (value)
-        $tasks = Task::with('owner', 'status')
-            ->get()
-            ->map(function ($task) {
-                return [
-                    'name' => $task->name,
-                    'value' => $task->status?->percentage ?? 0,
-                    'owner' => $task->owner?->name ?? 'Unknown',
-                ];
-            });
-    
-        // Teams with their lead and stats
-        $teams = Team::withCount('projects', 'members')
-            ->with('teamLead')
-            ->get()
-            ->map(function ($team) {
-                return [
-                    'id' => $team->id,
-                    'name' => $team->name,
-                    'teamLead' => $team->teamLead?->name ?? 'N/A',
-                    'members' => $team->members_count,
-                    'projectCount' => $team->projects_count,
-                ];
-            });
-    
-        // Final data
-        $data = [
-            'projects' => $projectStatuses,
-            'allProjectsData' => $allProjectsData,
-            'tasks' => $tasks,
-            'teams' => $teams,
-        ];
-    
+
+            $allProjectsData = Project::Accessible()
+                ->with(['status:id,name', 'tasks.status:id,percentage'])
+                ->get()
+                ->map(function ($project) {
+                    return [
+                        'name' => $project->name,
+                        'statusName' => $project->status->name ?? 'Unknown',
+                        'value' => $project->getProgressPercentage() ?? 0,
+                    ];
+                });
+
+            $tasks = Task::with(['owner:id,name', 'status:id,percentage'])
+                ->get()
+                ->map(function ($task) {
+                    return [
+                        'name' => $task->name,
+                        'value' => $task->status->percentage ?? 0,
+                        'owner' => $task->owner->name ?? 'Unknown',
+                    ];
+                });
+
+            $teams = Team::withCount(['projects', 'members'])
+                ->with('teamLead:id,name')
+                ->get()
+                ->map(function ($team) {
+                    return [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'teamLead' => $team->teamLead->name ?? 'N/A',
+                        'members' => $team->members_count,
+                        'projectCount' => $team->projects_count,
+                    ];
+                });
+
+            return [
+                'projects' => $projectStatuses,
+                'allProjectsData' => $allProjectsData,
+                'tasks' => $tasks,
+                'teams' => $teams,
+            ];
+        });
+
         return $this->sendResponse($data);
     }    
 

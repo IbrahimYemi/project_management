@@ -18,10 +18,10 @@ class TeamController extends Controller
 
         if ($user->hasAnyAppRole(['Super Admin', 'Admin'])) {
             // Admin can see all teams
-            $teams = Team::with(['teamLead', 'members'])->get();
+            $teams = Team::with(['teamLead', 'members', 'projects.taskStatuses'])->get();
         } else {
             // members see the teams they belong to
-            $teams = Team::with(['teamLead', 'members'])
+            $teams = Team::with(['teamLead', 'members', 'projects.taskStatuses'])
                 ->whereHas('members', function ($query) use ($user) {
                     $query->where('user_id', $user->id);
                 })
@@ -36,7 +36,7 @@ class TeamController extends Controller
     {
         $this->authorize('member', $team);
 
-        return $this->sendResponse(TeamCollectionResource::make($team->load(['teamLead', 'members'])));
+        return $this->sendResponse(TeamCollectionResource::make($team->load(['teamLead', 'members', 'projects.taskStatuses'])));
     }
 
     public function store(Request $request)

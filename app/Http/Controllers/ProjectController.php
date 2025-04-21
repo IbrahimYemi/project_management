@@ -20,16 +20,7 @@ class ProjectController extends Controller
         $perPage = 10;
         $page = request('page', 1);
 
-        $user = auth()->user();
-
-        if ($user->hasAnyAppRole(['Super Admin', 'Admin'])) {
-            $projects = Project::with(['taskStatuses', 'status']);
-        } else {
-            // Team Members - Projects where user is a member
-            $projects = Project::whereHas('team.members', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })->with(['taskStatuses', 'status']);
-        }
+        $projects = Project::Accessible()->with(['taskStatuses', 'status', 'team.members', 'tasks.status', ]);
 
         $projectsCollection = AllProjectResource::collection($projects->paginate(10));
         
@@ -38,16 +29,14 @@ class ProjectController extends Controller
 
     public function getUserProjects(User $user)
     {
-        if ($user->hasAnyAppRole(['Super Admin', 'Admin'])) {
-            $projects = Project::isActive()->with(['taskStatuses', 'status']);
-        } else {
-            // Team Members - Projects where user is a member
-            $projects = Project::isActive()->whereHas('team.members', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })->with(['taskStatuses', 'status']);
-        }
+        $projects = Project::Accessible($user);
         
-        return $this->sendResponse(AllProjectResource::collection($projects->get()));
+        return $this->sendResponse($projects->get()->map(function($pr) {
+            return [
+                'id' => $pr->id,
+                'name' => $pr->name,
+            ];
+        }));
     }
 
     // Create a new project (Admin only)
@@ -116,19 +105,34 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        return $this->sendResponse( ProjectCollectionResource::make($project->load([
-            'team.members', 
-            'team.projects', 
-            'status', 
-            'tasks', 
+        // Eager load everything needed
+        $project->load([
+            'team.members',
+            'team.teamLead',
+            'status',
+            'tasks',
             'meetings',
-            'taskStatuses', 'status'
-        ])));
+            'taskStatuses',
+        ])->loadCount('tasks');
+
+        // Eager‑load counts on the team
+        if ($project->relationLoaded('team')) {
+            $project->team->loadCount(['projects', 'members']);
+        }
+        if ($project->relationLoaded('tasks')) {
+            $project->tasks->load(['assignedUser', 'status', 'priority']);
+        }
+
+        return $this->sendResponse(ProjectCollectionResource::make($project));
     }
 
-    // Update a project (Admin only)
+    // Update a project (Admins only)
     public function update(Request $request, Project $project)
     {
+        if ($project->is_completed) {
+            return $this->sendError('Project already completed!', [], 403);
+        }
+
         $this->authorize('update', $project);
 
         $request->validate([

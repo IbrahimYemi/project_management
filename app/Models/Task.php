@@ -35,6 +35,11 @@ class Task extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function discussions(): HasMany
     {
         return $this->hasMany(Discussion::class);
