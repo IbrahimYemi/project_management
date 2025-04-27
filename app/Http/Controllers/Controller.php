@@ -62,7 +62,7 @@ abstract class Controller
         $user->clearLoginToken();
 
         // pass user role
-        $user->role = $user->app_role;
+        $user->role = $user->app_role ?? 'Member';
 
         // create auth token
         $token = $user->createToken('project_mngt_token')->plainTextToken;

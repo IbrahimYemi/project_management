@@ -12,7 +12,7 @@ class SuperAdminSeeder extends Seeder
     public function run()
     {
         // Ensure the role exists
-        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        // $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
         $superAdminEmail = env('SUPER_ADMIN_EMAIL');
         $superAdminName = env('SUPER_ADMIN_NAME');
 
@@ -29,7 +29,7 @@ class SuperAdminSeeder extends Seeder
             );
 
             // Assign the "Super Admin" role
-            $user->assignRole($superAdminRole);
+            // $user->assignRole($superAdminRole);
         }
     }
 }

@@ -32,7 +32,9 @@ class TeamCollectionResource extends JsonResource
                 ];
             }),
             'project_on' => $this->projects->map(function ($project) {
-                return AllProjectResource::make($project);
+                return [
+                    'id' => $project->id,
+                ];
             }),
         ];
     }

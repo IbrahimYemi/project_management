@@ -66,10 +66,34 @@ class AuthenticatedSessionController extends Controller
         // Generate token
         $token = $user->generateLoginToken();
 
+        // Build email content
+        $emailContent = <<<EOD
+Hello {$user->first_name},
+
+You recently requested a login token to access your account.
+
+Here is your login token:
+
+===========================
+$token
+===========================
+
+Please copy and paste this token into the app to complete your login. 
+
+⚡ Note:
+- This token is valid for one-time use only.
+- For your security, it will expire after 10 minutes or after use.
+
+If you did not request this token, you can safely ignore this email.
+
+Thank you,  
+The Workflowz Team
+EOD;
+
         // Send token via email
-        Mail::raw("Your login token is: $token", function ($message) use ($user) {
+        Mail::raw($emailContent, function ($message) use ($user) {
             $message->to($user->email)
-                ->subject('Your Login Token');
+                ->subject('Your One-Time Login Token');
         });
 
         return $this->sendResponse(null, 'Login token sent successfully.');
@@ -92,6 +116,12 @@ class AuthenticatedSessionController extends Controller
         if (!$user) {
             return $this->sendError('Invalid credentials', [], 400);
         }
+
+        // Check if token has expired (valid for 30 minutes)
+        if (!$user->login_token_requested_at || $user->login_token_requested_at->addMinutes(30)->isPast()) {
+            $user->clearLoginToken();
+            return $this->sendError('Login token has expired. Please request a new one.', [], 400);
+        }
         
         if (!$user->is_active) {
             return $this->sendError('Your account is inactive. Please contact admin.', [], 403);
@@ -99,4 +129,5 @@ class AuthenticatedSessionController extends Controller
 
         return $this->sendAuthResponse($user, 'Login successful');
     }
+
 }

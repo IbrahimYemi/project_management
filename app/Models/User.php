@@ -109,7 +109,7 @@ class User extends Authenticatable
     }
 
     // Accessor for Role
-    public function getRoleAttribute(): string
+    public function getRoleAttribute()
     {
         return $this->app_role; 
     }
@@ -117,11 +117,11 @@ class User extends Authenticatable
     // Convert is_active to isActive for JS compatibility
     public function getIsActiveAttribute()
     {
-        return (bool) $this->attributes['is_active'];
+        return (bool) $this->is_active ?? true;
     }
 
     // function to check for posible user app_role
-    public function hasAnyAppRole(array | string $roles): bool
+    public function hasAnyAppRole($roles): bool
     {
         if (is_string($roles)) {
             $roles = [$roles];

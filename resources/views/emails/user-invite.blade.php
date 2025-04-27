@@ -50,7 +50,9 @@
         <h2>Hello {{ $name }},</h2>
         <p>You have been invited to join our platform!</p>
         <p>Click the button below to accept the invitation and complete your registration.</p>
-        <a href="{{ $inviteUrl }}" class="button">Accept Invitation</a>
+        <a href="{{ $inviteUrl }}" class="button">
+            <span style="color: white">Accept Invitation</span>
+        </a>
         <p>If you did not request this invitation, you can ignore this email.</p>
         <p class="footer">This invitation will expire in 24 hours.</p>
     </div>

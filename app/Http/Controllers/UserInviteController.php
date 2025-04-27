@@ -20,7 +20,7 @@ class UserInviteController extends Controller
         $query = $request->query('query');
 
         $users = User::query()
-            ->orderByRaw("FIELD(app_role, 'Super Admin', 'Admin', 'Teamlead', 'Member')")
+            ->orderByRaw("FIELD(app_role, 'Super Admin', 'Admin', 'Team Lead', 'Member')")
             ->latest();
 
         if ($query) {
@@ -90,7 +90,7 @@ class UserInviteController extends Controller
 
     public function deleteUser(User $user)
     {
-        if ($this->cantDeleteAdmin($user) === true) {
+        if ($this->cantDeleteAdmin($user) === true || auth()->id() == $user->id) {
             return $this->sendError('Action unauthorized');
         }
         
@@ -104,7 +104,7 @@ class UserInviteController extends Controller
         $this->authorize('update', UserInvite::class);
 
         $request->validate([
-            'app_role' => 'required|string|in:Admin,Teamlead,Member',
+            'app_role' => 'required|string|in:Admin,Team Lead,Member',
         ]);
         
         // Check if the user is a Super Admin
