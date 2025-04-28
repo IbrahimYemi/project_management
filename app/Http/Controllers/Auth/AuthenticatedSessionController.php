@@ -68,7 +68,7 @@ class AuthenticatedSessionController extends Controller
 
         // Build email content
         $emailContent = <<<EOD
-Hello {$user->first_name},
+Hello {$user->name},
 
 You recently requested a login token to access your account.
 
@@ -82,7 +82,7 @@ Please copy and paste this token into the app to complete your login.
 
 ⚡ Note:
 - This token is valid for one-time use only.
-- For your security, it will expire after 10 minutes or after use.
+- For your security, it will expire after 30 minutes or after use.
 
 If you did not request this token, you can safely ignore this email.
 

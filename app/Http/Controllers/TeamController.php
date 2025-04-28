@@ -98,13 +98,19 @@ class TeamController extends Controller
             $team->update($request->only(['name', 'team_lead_id']));
 
             if ($request->filled('members')) {
-                $team->members()->sync($request->members);
+                $membersWithUUIDs = collect($request->members)->mapWithKeys(function ($memberId) {
+                    return [
+                        $memberId => ['id' => (string) Str::orderedUuid()]
+                    ];
+                });
+                $team->members()->sync($membersWithUUIDs);
             }
 
             DB::commit();
 
             return $this->sendResponse($team->load('members'));
         } catch (\Exception $e) {
+            \Log::info($e->getMessage());
             DB::rollBack();
             return $this->sendError('Failed to update team', [], 500);
         }

@@ -34,6 +34,18 @@ class TeamCollectionResource extends JsonResource
             'project_on' => $this->projects->map(function ($project) {
                 return [
                     'id' => $project->id,
+                    'name' => $project->name,
+                    'description' => $project->description,
+                    'task_count' => $project->tasks_count,
+                    'members_count' => $this->members->count(),
+                    'team_name' => $this->name,
+                    'percentage' => $project->getProgressPercentage() ?? 0,
+                    'is_completed' => $project->is_completed ?? false,
+                    'created_at' => $project->created_at->toISOString(),
+                    'task_status' => $project->taskStatuses ?? [],
+                    'team_id' => $this->id ?? null,
+                    'status_id' => $project->status_id ?? null,
+                    'status' => $project->status ?? null,
                 ];
             }),
         ];

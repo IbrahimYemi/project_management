@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\NotificationResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Task;
@@ -14,16 +15,26 @@ use Illuminate\Support\Facades\Cache;
 class DashboardController extends Controller
 {
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $cacheKey = 'dashboard_data_' . auth()->id();
+        $fromDate = $request->input('fromDate') 
+            ? Carbon::parse($request->input('fromDate'))->startOfDay() 
+            : now()->subMonths(5)->startOfDay();
+
+        $toDate = $request->input('toDate') 
+            ? Carbon::parse($request->input('toDate'))->endOfDay() 
+            : now()->endOfDay();
+
+        $cacheKey = 'dashboard_data_' . auth()->id() . '_' . $fromDate->format('Ymd') . '_' . $toDate->format('Ymd');
         $cacheDuration = now()->addMinutes(3);
 
-        $data = Cache::remember($cacheKey, $cacheDuration, function () {
-            $totalProjects = Project::Accessible()->count();
+        $data = Cache::remember($cacheKey, $cacheDuration, function () use ($fromDate, $toDate) {
+            $totalProjects = Project::Accessible()
+                ->whereBetween('created_at', [$fromDate, $toDate])
+                ->count();
 
-            $projectStatuses = ProjectStatus::withCount(['projects' => function ($query) {
-                $query->Accessible();
+            $projectStatuses = ProjectStatus::withCount(['projects' => function ($query) use ($fromDate, $toDate) {
+                $query->Accessible()->whereBetween('created_at', [$fromDate, $toDate]);
             }])->get()->map(function ($status) use ($totalProjects) {
                 $percentage = $totalProjects > 0
                     ? round(($status->projects_count / $totalProjects) * 100, 2)
@@ -36,6 +47,7 @@ class DashboardController extends Controller
 
             $allProjectsData = Project::Accessible()
                 ->with(['status:id,name', 'tasks.status:id,percentage'])
+                ->whereBetween('created_at', [$fromDate, $toDate])
                 ->get()
                 ->map(function ($project) {
                     return [
@@ -46,10 +58,11 @@ class DashboardController extends Controller
                 });
 
             $tasks = Task::with(['owner:id,name', 'status:id,percentage'])
+                ->whereBetween('created_at', [$fromDate, $toDate])
                 ->get()
                 ->map(function ($task) {
                     return [
-                        'name' => $task->name,
+                        'name' => $task->title,
                         'value' => $task->status->percentage ?? 0,
                         'owner' => $task->owner->name ?? 'Unknown',
                     ];

@@ -91,7 +91,7 @@ class User extends Authenticatable
      */
     public function generateLoginToken(): string
     {
-        $token = strtoupper(bin2hex(random_bytes(4)));
+        $token = rand(10000, 99999);
         $this->update([
             'login_token' => $token,
             'login_token_requested_at' => now()
@@ -117,7 +117,7 @@ class User extends Authenticatable
     // Convert is_active to isActive for JS compatibility
     public function getIsActiveAttribute()
     {
-        return (bool) $this->is_active ?? true;
+        return (bool) ($this->is_active ?? true);
     }
 
     // function to check for posible user app_role
